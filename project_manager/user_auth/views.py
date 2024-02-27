@@ -36,8 +36,8 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
         return obj
 
     @extend_schema(
-           description='Retrieve current user details. Current user can only retrieve their own details.',
-           responses={200: UserSerializer, 404: UserErrorSerializer}
+        description='Retrieve current user details. Current user can only retrieve their own details.',
+        responses={200: UserSerializer, 404: UserErrorSerializer}
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)

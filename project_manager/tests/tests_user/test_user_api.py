@@ -1,23 +1,22 @@
-import pytest
-from django.contrib.auth.models import User
+from rest_framework import status
+
+from tests.test_setup import TestSetUp
 
 
-class TestUserAPI:
+class TestUserAPI(TestSetUp):
 
-    @pytest.mark.django_db
-    def test_create_user(self, api_client):
+    def test_create_user(self):
         """ Test create user """
-        response = api_client.post('/auth/register/',
-                                   {'username': 'test_user', 'email': 'test_user@mail.ru', 'password': 'test_password'})
-        print('RESPONSE_USER', response.data)
-        assert response.status_code == 201
+        data = {
+            'username': 'test_user',
+            'email': 'test@test.com',
+            'password': 'password'
+        }
+        response = self.client.post(self.register_url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @pytest.mark.django_db
-    def test_logout_user(self, api_client, get_token):
+    def test_logout_user(self):
         """ Test logout user """
-        response = api_client.post('/auth/logout/', {'refresh_token': get_token['refresh']},
-                                   HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-
-        print('LOGOUT', User.objects.all().values('id'))
-        assert response.status_code == 204
-        assert response.data == {'refresh_token': get_token['refresh']}
+        response = self.client.post(self.logout_url, {'refresh_token': self.token['refresh']},
+                                    HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

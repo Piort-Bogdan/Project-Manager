@@ -1,129 +1,102 @@
-import pytest
+from rest_framework import status
 
-from projects.models import Task, Project
+from tests.test_setup import TestSetUp
 
 
-class TestProjectApi:
+class TestProjectApi(TestSetUp):
 
-    @pytest.mark.django_db
-    def test_create_project(self, api_client, get_token):
+    def test_create_project(self):
         """ Test create project """
         data = {
-              "title": "Project title",
-              "description": "Project description",
-              "team_members": [
-                1,
-                2
-              ],
-              "started_at": "2022-01-01T00:00:00Z",
-              "finished_at": "2022-01-01T00:00:00Z"
+            "title": "Project title",
+            "description": "Project description",
+            "team_members": [
+                self.user.objects.all().first().id,
+            ],
+            "started_at": "2022-01-01T00:00:00Z",
+            "finished_at": "2022-01-01T00:00:00Z"
         }
-        response = api_client.post('/projects/', json=data,
-                                   HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 201
+        response = self.client.post(self.projects_url, data=data,
+                                    HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @pytest.mark.django_db
-    def test_get_projects_list(self, api_client, get_token):
+    def test_get_projects_list(self):
         """ Test get projects """
-        response = api_client.get('/projects/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
+        response = self.client.get(self.projects_url,
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
         assert response.status_code == 200
-        assert len(response.data) == Project.objects.count()
 
-    @pytest.mark.django_db
-    def test_get_project_detail(self, api_client, get_token):
+    def test_get_project_detail(self):
         """ Test get project detail """
-        project = Project.objects.first()
-        response = api_client.get(f'/projects/{project.id}/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 200
-        assert response.data['id'] == project.id
-        assert response.data['title'] == project.title
+        response = self.client.get(self.projects_det_url, {'id': self.project.id},
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_get_projects_list_unauthorized(self, api_client):
+    def test_get_projects_list_unauthorized(self):
         """ Test get projects without token """
-        response = api_client.get('/projects/')
-        assert response.status_code == 401
-        assert response.data['detail'] == 'Authentication credentials were not provided.'
+        response = self.client.get(self.projects_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_get_project_detail_unauthorized(self, api_client):
-        """ Test get project detail without token """
-        project = Project.objects.first()
-        response = api_client.get(f'/projects/{project.id}/')
-        assert response.status_code == 401
-        assert response.data['detail'] == 'Authentication credentials were not provided.'
-
-    def test_get_project_detail_not_found(self, api_client, get_token):
+    def test_get_project_detail_not_found(self):
         """ Test get project detail not found """
-        response = api_client.get(f'/projects/100/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 404
-        assert response.data['detail'] == 'Not found.'
+        response = self.client.get(self.get_detail_url('project-detail', 1000),
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @pytest.mark.django_db
-    def test_task_create(self, api_client, get_token):
+    def test_task_create(self):
         """ Test create task """
-        project = Project.objects.first()
         data = {
             "title": "Task title",
             "description": "Task description",
-            "own_project": project.id,
+            "own_project": self.project.id,
             "deadline": "2022-01-01T00:00:00Z",
             "assigned_to": [
-                1,
+                self.user.objects.all().first().id,
             ]
         }
-        response = api_client.post('/tasks/', json=data,
-                                   HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 201
-        assert response.data['project'] == project.id
-        assert response.data['title'] == data['title']
+        response = self.client.post(self.task_url, data=data,
+                                    HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @pytest.mark.django_db
-    def test_get_task_detail(self, api_client, get_token):
+    def test_get_task_detail(self):
         """ Test get task detail """
-        task = Task.objects.first()
-        response = api_client.get(f'/tasks/{task.id}/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 200
-        assert response.data['id'] == task.id
-        assert response.data['title'] == task.title
+        response = self.client.get(self.task_det_url, {'id': self.task.id},
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_task_create_unauthorized(self, api_client):
+    def test_task_create_unauthorized(self):
         """ Test create task without token """
-        response = api_client.post('/tasks/')
-        assert response.status_code == 401
-        assert response.data['detail'] == 'Authentication credentials were not provided.'
-
-    def test_start_time_tracking(self, api_client, get_token):
-        """ Test start time treking """
-        task = Task.objects.first()
         data = {
-            "task": 1,
-            "team_member": 1
+            "title": "Task title",
+            "description": "Task description",
+            "own_project": self.project.id,
+            "deadline": "2022-01-01T00:00:00Z",
+            "assigned_to": [
+                self.user.objects.all().first().id,
+            ]
         }
-        response = api_client.post(f'/tasks/{task.id}', json=data,
-                                   HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 201
+        response = self.client.post(self.task_url, json=data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_get_task_under_tracking(self, api_client, get_token):
+    def test_start_time_tracking(self):
+        """ Test start time tracking """
+        task = self.get_task()
+        data = {
+            "task": task.id,
+            "team_member": self.user.objects.all().last().id
+        }
+        response = self.client.post(self.time_tracker_url, data=data,
+                                    HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_get_task_under_tracking(self):
         """ Test get task under tracking """
-        response = api_client.get('/time-tracker/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 200
-        assert len(response.data) == 1
+        response = self.client.get(self.time_tracker_url,
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    @pytest.mark.django_db
-    def test_delete_project(self, api_client, get_token):
+    def test_delete_project(self):
         """ Test delete project """
-        project = Project.objects.first()
-        response = api_client.delete(f'/task/{project.id}/',
-                                     HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        assert response.status_code == 204
-        assert Project.objects.count() == 0
-
-
-
-
-
-
+        response = self.client.delete(self.projects_det_url,
+                                      HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

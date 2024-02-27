@@ -18,13 +18,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         return project
 
-    # def get_extra_kwargs(self):
-    #     extra_kwargs = super().get_extra_kwargs()
-    #     extra_kwargs.update({
-    #         'team_members': {'help_text': 'The team members of the project'},
-    #     })
-    #     return extra_kwargs
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['team_members'] = [team_member.username for team_member in instance.team_members.all()]
@@ -40,19 +33,10 @@ class TaskSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        print('VALIDATED DATA', validated_data)
         assinged_to = validated_data.pop('assigned_to')
         task = Task.objects.create(**validated_data)
         task.assigned_to.set(assinged_to)
         return task
-
-    def get_extra_kwargs(self):
-        extra_kwargs = super().get_extra_kwargs()
-        extra_kwargs.update({
-            'own_project': {'help_text': 'The project to which the task belongs'},
-            'assigned_to': {'help_text': 'The team members assigned to the task'},
-        })
-        return extra_kwargs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)

@@ -38,8 +38,7 @@ class ProjectListView(generics.ListCreateAPIView):
 class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-    permission_classes = []
-    # permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser]
     lookup_field = 'id'
     http_method_names = ['get', 'patch', 'delete']
 

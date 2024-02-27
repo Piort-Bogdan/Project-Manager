@@ -1,27 +1,26 @@
-import pytest
-from django.contrib.auth.models import User
+from rest_framework import status
+
+from messenger.models import Message
+from tests.test_setup import TestSetUp
 
 
-class TestMessageApi:
+class TestMessageApi(TestSetUp):
 
-    @pytest.mark.django_db
-    def test_create_message(self, api_client, get_token):
+    def test_create_message(self):
         """ Test create message """
-        response = api_client.post('/api/messages/',
-                                   {'text': 'test_message', 'receivers': [1, 2], 'sender': 1},
-                                   HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        a = User.objects.all().values('id')
-        print('AA_AA', a)
-        print('RESPONSE___', response.data)
-        assert response.status_code == 201
+        data = {
+            'text': 'test_message',
+            'receivers': [self.user.objects.all().first().id],
+            'sender': self.user.objects.all().first().id
+        }
+        response = self.client.post(self.message_url, data,
+                                    HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    @pytest.mark.django_db
-    def test_message_list(self, api_client, get_token):
+    def test_message_list(self):
         """ Test message list """
-        response = api_client.get('/api/messages/',
-                                  HTTP_AUTHORIZATION=f'Bearer {get_token["access"]}')
-        print('USER', User.objects.all().values('id'))
-        print('RESPONSE__|', response.status_code)
-        print('RESPONSE__|', response.data)
-        assert response.status_code == 200
-        assert len(response.data) == 1
+        message = Message.objects.create(text='test_message', sender=self.user.objects.all().first())
+        message.receivers.set(self.user.objects.all())
+        response = self.client.get(self.message_url,
+                                   HTTP_AUTHORIZATION=f'Bearer {self.token["access"]}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)

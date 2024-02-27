@@ -29,7 +29,6 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        print('ASDASDASDASDASDASD', data)
         data['sender'] = instance.sender.username
         data['receivers'] = [receivers.username for receivers in instance.receivers.all()]
         return data
