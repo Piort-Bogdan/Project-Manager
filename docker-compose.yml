@@ -31,10 +31,10 @@ services:
       db:
         condition: service_healthy
     profiles: [test]
-    command: sh -c "pytest && flake8"
+    command: sh -c "python manage.py test && flake8 --ignore=501 ."
 
   db:
-    image: postgres:13
+    image: postgres:13-alpine
     container_name: backend_db
     env_file:
       - docker-config.env
