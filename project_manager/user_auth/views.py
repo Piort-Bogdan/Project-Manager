@@ -1,15 +1,15 @@
 from django.contrib.auth.models import User
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework.generics import get_object_or_404
+from drf_spectacular.utils import extend_schema, OpenApiExample
+from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import generics, status
-from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.exceptions import AuthenticationFailed
 
 from .permissions import IsAuthenticateAndAccountOwner
-from .serializers import UserSerializer, UserRegisterSerializer, UserLogoutSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, UserLogoutSerializer, LoginResponseSerializer, \
+    UserErrorSerializer
 
 
 class UserDetailView(generics.RetrieveUpdateAPIView):
@@ -35,33 +35,45 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
 
         return obj
 
-    @swagger_auto_schema(
-        operation_description='Retrieve current user details. Current user can only retrieve their own details.',
-        responses={200: UserSerializer, 404: 'Not Found'}
+    @extend_schema(
+           description='Retrieve current user details. Current user can only retrieve their own details.',
+           responses={200: UserSerializer, 404: UserErrorSerializer}
     )
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    @swagger_auto_schema(
-        operation_description='Update current user details. Current user can only update their own details.',
-        request_body=UserSerializer,
-        responses={200: UserSerializer, 400: 'Bad Request'}
+    @extend_schema(
+        description='Update current user details. Current user can only update their own details.',
+        request=UserSerializer,
+        responses={200: UserSerializer, 400: UserErrorSerializer},
+        examples=[
+            OpenApiExample('Example 1', summary='Update user details', value={
+                'username': 'user1', 'email': 'user@example.com', 'first_name': 'User', 'last_name': 'One'})
+        ],
     )
     def patch(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
 
 
-class LoginView(APIView):
+class LoginView(GenericAPIView):
     permission_classes = []
 
-    @swagger_auto_schema(
-        operation_description='Login to the system, returns access and refresh tokens',
-        request_body=UserRegisterSerializer,
-        responses={200: 'OK', 400: 'Bad Request'}
+    @extend_schema(
+        description='Login to the system',
+        responses={200: LoginResponseSerializer(many=False), 400: UserErrorSerializer}
+    )
+    @extend_schema(
+        request=LoginResponseSerializer,
+        examples=[
+            OpenApiExample('Example 1', summary='Login with username and password', value={
+                'username': 'user1', 'password': 'password123'}),
+        ],
     )
     def post(self, request):
         username = request.data.get('username')
         password = request.data.get('password')
+        if username is None:
+            return Response({'detail': 'Username is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -70,19 +82,23 @@ class LoginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Invalid password')
         refresh = RefreshToken.for_user(user)
-        return Response(status=status.HTTP_200_OK, data={
+        serializer = LoginResponseSerializer({
             'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        })
+            'access': str(refresh.access_token)})
+        return Response(status=status.HTTP_200_OK, data=serializer.data)
 
 
-class RegisterView(APIView):
+class RegisterView(GenericAPIView):
     permission_classes = []
 
-    @swagger_auto_schema(
-        operation_description='Register a new user',
-        request_body=UserRegisterSerializer,
-        responses={201: 'Created', 400: 'Bad Request'}
+    @extend_schema(
+        description='Register a new user',
+        request=UserRegisterSerializer,
+        responses={201: UserRegisterSerializer, 400: UserErrorSerializer},
+        examples=[
+            OpenApiExample('Example 1', summary='Register a new user', value={
+                'username': 'user1', 'email': 'user1@example.ru', 'password': 'password'}),
+        ],
     )
     def post(self, request):
         serializer = UserRegisterSerializer(data=request.data)
@@ -100,10 +116,12 @@ class LogoutView(generics.GenericAPIView):
     serializer_class = UserLogoutSerializer
     permission_classes = (IsAuthenticated, )
 
-    @swagger_auto_schema(
-        operation_description='Logout from the system',
-        request_body=UserLogoutSerializer,
-        responses={204: 'No Content', 400: 'Bad Request'}
+    @extend_schema(
+        description='Logout from the system',
+        responses={204: "No content", 400: UserErrorSerializer},
+        examples=[
+            OpenApiExample('Example 1', summary='Logout from the system', value={'refresh_token': 'refresh_token'}),
+        ],
     )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)

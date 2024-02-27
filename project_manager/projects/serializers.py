@@ -18,12 +18,12 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         return project
 
-    def get_extra_kwargs(self):
-        extra_kwargs = super().get_extra_kwargs()
-        extra_kwargs.update({
-            'team_members': {'help_text': 'The team members of the project'},
-        })
-        return extra_kwargs
+    # def get_extra_kwargs(self):
+    #     extra_kwargs = super().get_extra_kwargs()
+    #     extra_kwargs.update({
+    #         'team_members': {'help_text': 'The team members of the project'},
+    #     })
+    #     return extra_kwargs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -86,3 +86,7 @@ class TimeTrackerSerializer(serializers.ModelSerializer):
         data['task'] = instance.task.title
         data['team_member'] = instance.team_member.username
         return data
+
+
+class ProjectErrorSerializer(serializers.Serializer):
+    detail = serializers.CharField()

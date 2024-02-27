@@ -1,5 +1,3 @@
-import datetime
-
 from django.db import models
 
 
@@ -14,6 +12,9 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        ordering = ['-started_at']
 
 
 class Task(models.Model):
@@ -35,6 +36,9 @@ class Task(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        ordering = ['-deadline']
+
 
 class TimeTracker(models.Model):
     """ Model for tracking time"""
@@ -47,3 +51,4 @@ class TimeTracker(models.Model):
 
     class Meta:
         unique_together = ['task', 'team_member']
+        ordering = ['-ended_at']

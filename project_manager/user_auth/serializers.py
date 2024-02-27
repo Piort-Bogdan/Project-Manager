@@ -37,3 +37,12 @@ class UserLogoutSerializer(serializers.Serializer):
             RefreshToken(self.token).blacklist()
         except TokenError:
             self.fail('bad_token')
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+    access = serializers.CharField()
+
+
+class UserErrorSerializer(serializers.Serializer):
+    detail = serializers.CharField()

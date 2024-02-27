@@ -5,7 +5,7 @@ from .models import Message
 
 
 class MessageSerializer(serializers.ModelSerializer):
-    receiver = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    receivers = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
     sender = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
@@ -14,7 +14,9 @@ class MessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def create(self, validated_data):
+        receivers = validated_data.pop('receivers')
         message = Message.objects.create(**validated_data)
+        message.receivers.set(receivers)
         return message
 
     def get_extra_kwargs(self):
@@ -27,6 +29,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        print('ASDASDASDASDASDASD', data)
         data['sender'] = instance.sender.username
-        data['receiver'] = instance.receiver.username
+        data['receivers'] = [receivers.username for receivers in instance.receivers.all()]
         return data
