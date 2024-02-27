@@ -15,4 +15,3 @@ def setup_periodic_tasks(sender, **kwargs):
 @app.task
 def remove_expired_tokens_from_db():
     subprocess.run(['python', 'manage.py', 'flushexpiredtokens'])
-

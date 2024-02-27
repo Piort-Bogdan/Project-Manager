@@ -17,8 +17,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-#    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn --workers=2 config.wsgi --bind 0.0.0.0:8000 "
-    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn --workers=2 config.wsgi --bind 0.0.0.0:8000 "
 
   backend_test:
     container_name: backend_test
@@ -31,7 +30,7 @@ services:
       db:
         condition: service_healthy
     profiles: [test]
-    command: sh -c "python manage.py test && flake8 --ignore=501 ."
+    command: sh -c "python manage.py test && flake8 ."
 
   db:
     image: postgres:13-alpine
