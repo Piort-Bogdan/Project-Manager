@@ -49,7 +49,34 @@ services:
         timeout: 5s
         retries: 5
 
+  redis:
+    image: redis:alpine
+    container_name: backend_redis
+    expose:
+      - 6379
+    restart: always
 
+  celery:
+    container_name: backend_celery
+    image: backend_app_image
+    env_file:
+      - docker-config.env
+    volumes:
+      - ./project_manager:/app
+    depends_on:
+      - redis
+      - backend
+    command: sh -c "celery -A config worker -l info"
+
+  celery-beat:
+    image: backend_app_image
+    command: celery -A config beat -l info
+    volumes:
+      - ./project/:/usr/src/app/
+    env_file:
+      - docker-config.env
+    depends_on:
+      - celery
 
 volumes:
     postgres_data:

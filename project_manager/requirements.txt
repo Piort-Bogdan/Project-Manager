@@ -1,4 +1,4 @@
-Django==5.0.2
+Django==4.2.10
 django-filter==23.5
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.3.1
@@ -6,3 +6,6 @@ drf-spectacular==0.27.1
 flake8==7.0.0
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
+celery==5.3.6
+django-celery-beat==2.5.0
+redis==5.0.1
