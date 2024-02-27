@@ -19,12 +19,19 @@ services:
         condition: service_healthy
 #    command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && gunicorn --workers=2 config.wsgi --bind 0.0.0.0:8000 "
     command: sh -c "python manage.py collectstatic --noinput && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
-#
-#  backend_migration:
-#    image: backend_app_image
-#    container_name: backend_migration
-#    command: sh -c "python manage.py makemigrations && python manage.py migrate"
 
+  backend_test:
+    container_name: backend_test
+    image: backend_app_image
+    env_file:
+      - docker-config.env
+    volumes:
+      - ./project_manager:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: [test]
+    command: sh -c "pytest && flake8"
 
   db:
     image: postgres:13

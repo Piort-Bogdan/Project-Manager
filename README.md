@@ -20,7 +20,7 @@ docker-compose up
 ### Testing
 To run the tests, run the following command:
 ```shell
-docker-compose run
+docker-compose --profile test up --abort-on-container-exit --exit-code-from backend_test
 ```
 Flake8 and pytest checks:
 ```shell

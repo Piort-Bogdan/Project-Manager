@@ -118,7 +118,7 @@ class LogoutView(generics.GenericAPIView):
 
     @extend_schema(
         description='Logout from the system',
-        responses={204: "No content", 400: UserErrorSerializer},
+        responses={204: UserLogoutSerializer, 400: UserErrorSerializer},
         examples=[
             OpenApiExample('Example 1', summary='Logout from the system', value={'refresh_token': 'refresh_token'}),
         ],
